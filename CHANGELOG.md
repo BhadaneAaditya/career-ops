@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.27.0](https://github.com/BhadaneAaditya/career-ops/compare/career-ops-v1.26.0...career-ops-v1.27.0) (2026-08-12)
+
+
+### Features
+
+* **cli:** add --help / -h usage block to stats.mjs ([#2556](https://github.com/BhadaneAaditya/career-ops/issues/2556)) ([3d8b53d](https://github.com/BhadaneAaditya/career-ops/commit/3d8b53dcf41917d889deff8435e869a5a53c6550))
+* **providers:** Eightfold AI talent-acquisition boards ([#2684](https://github.com/BhadaneAaditya/career-ops/issues/2684)) ([e991d58](https://github.com/BhadaneAaditya/career-ops/commit/e991d5853fdf708639721124c9bac17ff291f2b0))
+* **rank:** opt-in LLM relevance re-ranker for pipeline.md ([#2579](https://github.com/BhadaneAaditya/career-ops/issues/2579)) ([03fc92b](https://github.com/BhadaneAaditya/career-ops/commit/03fc92bb04e1fc8821ff4ec71b26bcc6f0da1182))
+* **scan:** AND-groups in title_filter.positive ([#2552](https://github.com/BhadaneAaditya/career-ops/issues/2552)) ([5483083](https://github.com/BhadaneAaditya/career-ops/commit/548308354899de91be27fa2df8fefd176ef88e01))
+* **update:** restore locally deleted system files instead of preserving the deletion ([#2448](https://github.com/BhadaneAaditya/career-ops/issues/2448)) ([bfcaaba](https://github.com/BhadaneAaditya/career-ops/commit/bfcaaba7ba5662cd815b4e573757e9920515e7af))
+
+
+### Bug Fixes
+
+* **agent-inbox:** stop dropping requests queued during an add ([#2614](https://github.com/BhadaneAaditya/career-ops/issues/2614)) ([ad382c0](https://github.com/BhadaneAaditya/career-ops/commit/ad382c0b7f1fc2d4fc9a32094a49931c114e2a4b))
+* **archive:** key JD captures to report numbers so they resolve after capture day ([#2701](https://github.com/BhadaneAaditya/career-ops/issues/2701)) ([81d7b06](https://github.com/BhadaneAaditya/career-ops/commit/81d7b069a8a726468d9ca76ebb2d9e768b470f01))
+* **batch:** retry state updates and lock reservations to prevent worker silent drops ([#2417](https://github.com/BhadaneAaditya/career-ops/issues/2417)) ([5404185](https://github.com/BhadaneAaditya/career-ops/commit/5404185deff59f8604014c63060458d0b22c640c))
+* **ci:** skip the upgrade leg when nothing managed changed, instead of failing ([#2697](https://github.com/BhadaneAaditya/career-ops/issues/2697)) ([9dcfd2f](https://github.com/BhadaneAaditya/career-ops/commit/9dcfd2f668628879539c2ccfb3f17ce67f2824eb))
+* **cv-facts:** treat a k/M/B magnitude suffix as part of the number ([#2612](https://github.com/BhadaneAaditya/career-ops/issues/2612)) ([18d245a](https://github.com/BhadaneAaditya/career-ops/commit/18d245aa9edbfb99a6df90d5df8b6c63c971e549))
+* **cv:** Korean and Traditional Chinese CVs had no font rule ([#2616](https://github.com/BhadaneAaditya/career-ops/issues/2616)) ([994552d](https://github.com/BhadaneAaditya/career-ops/commit/994552dc5d3faecacdf23f56e21e1b845fbf1aa7))
+* **deps:** make js-yaml imports work on both 4.x and 5.x ([#2656](https://github.com/BhadaneAaditya/career-ops/issues/2656)) ([6466b18](https://github.com/BhadaneAaditya/career-ops/commit/6466b18382aa2cb9390f5d2425a63ae36bcea085))
+* **deps:** patch both HIGH advisories in web (js-yaml 4.3.1, nanoid 3.3.18) ([a094ec9](https://github.com/BhadaneAaditya/career-ops/commit/a094ec9ddbe8f21e8db6dba87f548532af2a820e))
+* **followup-cadence:** parse annotated pins, and add a retire directive ([#2514](https://github.com/BhadaneAaditya/career-ops/issues/2514)) ([b4f6b2d](https://github.com/BhadaneAaditya/career-ops/commit/b4f6b2dd4b55c8172e56ef776f1e4fd82bce4acf))
+* **jd-similarity:** the seniority gate fired on JD boilerplate ([#2661](https://github.com/BhadaneAaditya/career-ops/issues/2661)) ([772ea35](https://github.com/BhadaneAaditya/career-ops/commit/772ea35153f88a101c3d22da1741cb79804fae4d))
+* **jd-skill-gap:** recognize sentence-form requirement headings ([#2686](https://github.com/BhadaneAaditya/career-ops/issues/2686)) ([fd9ca41](https://github.com/BhadaneAaditya/career-ops/commit/fd9ca41d372886b1c095b8ba689e48950da6260f))
+* **jobvite:** migrate to the public XML feed after the JSON API retirement ([#2623](https://github.com/BhadaneAaditya/career-ops/issues/2623)) ([0c7522b](https://github.com/BhadaneAaditya/career-ops/commit/0c7522b408f0f62d334972a34fcf1ece2a55541c))
+* **liveness:** classify a rate-limited posting as uncertain, not expired ([#2613](https://github.com/BhadaneAaditya/career-ops/issues/2613)) ([c65afe6](https://github.com/BhadaneAaditya/career-ops/commit/c65afe6f508105d84da75fddb026b077afd9bbc0))
+* **merge-tracker:** re-eval no longer inherits the superseded report's checkmark ([#2595](https://github.com/BhadaneAaditya/career-ops/issues/2595)) ([c85d02f](https://github.com/BhadaneAaditya/career-ops/commit/c85d02fda92f93d3d97fe273b05059397be1ab87))
+* **ollama:** include profile context in evaluations ([#2664](https://github.com/BhadaneAaditya/career-ops/issues/2664)) ([ef2a82f](https://github.com/BhadaneAaditya/career-ops/commit/ef2a82f6970302733c35ebba9b3a30ec5fac65f1))
+* **oraclecloud:** accept Oracle's numbered tenant apexes (oraclecloud1-99.com) ([#2683](https://github.com/BhadaneAaditya/career-ops/issues/2683)) ([a23ebc1](https://github.com/BhadaneAaditya/career-ops/commit/a23ebc1a2f88a16db98af9f3a16e8c4041b5bded))
+* **providers:** fill in the docs and vendor-detection gaps ([#2658](https://github.com/BhadaneAaditya/career-ops/issues/2658)) ([7152907](https://github.com/BhadaneAaditya/career-ops/commit/7152907e88fd2daa05c83f8351ea873f8296e072))
+* **providers:** harden workable with retry, headers, and serialization ([#2675](https://github.com/BhadaneAaditya/career-ops/issues/2675)) ([feabcd4](https://github.com/BhadaneAaditya/career-ops/commit/feabcd45b3615af6d8871f89f17246dbbab3a811))
+* **providers:** isRetryableError no longer misclassifies a refused redirect ([#2657](https://github.com/BhadaneAaditya/career-ops/issues/2657)) ([f8feaa5](https://github.com/BhadaneAaditya/career-ops/commit/f8feaa53c3f7bb8cf0cc33196d0ca3bf999951da))
+* **providers:** personio falls back to HTML scrape when the XML feed is disabled ([5fe2784](https://github.com/BhadaneAaditya/career-ops/commit/5fe27841b7839d7b8ea5a7f5c753408b4f24f03c))
+* **reply-matcher:** require corroboration for partial role-title matches ([#2672](https://github.com/BhadaneAaditya/career-ops/issues/2672)) ([3215fa3](https://github.com/BhadaneAaditya/career-ops/commit/3215fa309d5158d2ea51a97a5074792e1d9138d7))
+* **scan:** take the shared lock for scan-history.tsv appends ([#2639](https://github.com/BhadaneAaditya/career-ops/issues/2639)) ([8e264c4](https://github.com/BhadaneAaditya/career-ops/commit/8e264c4b24a04fc6f0799b2e5c9a0479ed4e16e0))
+* **states:** aliases the engine accepts were missing from states.yml ([#2615](https://github.com/BhadaneAaditya/career-ops/issues/2615)) ([04ef492](https://github.com/BhadaneAaditya/career-ops/commit/04ef4925c8271112cfcd9711405b7bbc3ae3025f))
+* **theme-style:** a `$`-pattern in a profile style value splices the body into the CV's &lt;head&gt; ([1798f3a](https://github.com/BhadaneAaditya/career-ops/commit/1798f3a45e5ec8eb44af634dce5f6703a9c6d874))
+* **web:** finish Unicode company keys for explore + registry ([#2668](https://github.com/BhadaneAaditya/career-ops/issues/2668)) ([c294242](https://github.com/BhadaneAaditya/career-ops/commit/c294242dbb6a78a03bac738f397c568c02316971))
+* **web:** let the pipeline table scroll horizontally instead of clipping on narrow screens ([#2363](https://github.com/BhadaneAaditya/career-ops/issues/2363)) ([632031c](https://github.com/BhadaneAaditya/career-ops/commit/632031c9cb8ae95311a36310bb6cd2713497136c))
+* **web:** prevent Codex run jobs from waiting on stdin ([#1973](https://github.com/BhadaneAaditya/career-ops/issues/1973)) ([9a139a2](https://github.com/BhadaneAaditya/career-ops/commit/9a139a2aac44ae5e8da8e372a587a322ba99f149))
+* **web:** skip {n}-RESERVED.md sentinels when looking up reports ([#1967](https://github.com/BhadaneAaditya/career-ops/issues/1967)) ([5f4842e](https://github.com/BhadaneAaditya/career-ops/commit/5f4842e513fe45092395254ba51bc220676e598a))
+
+
+### Performance Improvements
+
+* **analytics:** drop redundant existsSync probes before report reads ([#2655](https://github.com/BhadaneAaditya/career-ops/issues/2655)) ([f06cbf8](https://github.com/BhadaneAaditya/career-ops/commit/f06cbf81bba797bc1cd758bca3d71866c80d9b9e))
+* **scan:** read each dedup source once per scan run ([d68c4c9](https://github.com/BhadaneAaditya/career-ops/commit/d68c4c963592787df3b7a34d4e5f9bb48010415b))
+
 ## [1.26.0](https://github.com/santifer/career-ops/compare/career-ops-v1.25.0...career-ops-v1.26.0) (2026-08-10)
 
 

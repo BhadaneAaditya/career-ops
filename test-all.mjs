@@ -30,7 +30,7 @@ import { join, dirname, basename, delimiter } from 'path';
 import { tmpdir } from 'os';
 import { promisify } from 'util';
 import { fileURLToPath, pathToFileURL } from 'url';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { pass, fail, warn, run, lastRunFailure, formatRunFailure, fileExists, finish, ROOT, QUICK, NODE, getBash, toBashPath } from './tests/helpers.mjs';
 import { flagValue, hasFlag } from './lib/cli-flags.mjs';
 
@@ -250,6 +250,7 @@ const scripts = [
   { name: 'check-table-freshness.mjs --self-test', expectExit: 0 },
   { name: 'upskill.mjs --self-test', expectExit: 0 },
   { name: 'detect-reposts.mjs --self-test', expectExit: 0 },
+  { name: 'rank-pipeline.mjs --self-test', expectExit: 0 },
   { name: 'discover-ats.mjs --self-test', expectExit: 0 },
   { name: 'process-quality.mjs --self-test', expectExit: 0 },
   { name: 'company-history.mjs --self-test', expectExit: 0 },
@@ -5301,7 +5302,16 @@ console.log('\n12c. Materialized skill index mode');
     // core.excludesFile is only the GLOBAL layer. `git init` also seeds
     // .git/info/exclude from a template, which GIT_TEMPLATE_DIR can still point
     // at an ambient one, so empty that layer too rather than assume it is inert.
-    writeFileSync(join(fixtureRoot, '.git', 'info', 'exclude'), '');
+    //
+    // mkdirSync first, because the same GIT_TEMPLATE_DIR that makes this write
+    // necessary is what can make its parent absent: pointed at an empty or a
+    // non-existent directory, `git init` still succeeds but seeds no .git/info,
+    // and the bare write threw ENOENT before the fixture ran a single assertion
+    // (santifer, reviewing #2567). Assuming the default template here would be
+    // the same ambient-environment dependency this block exists to remove.
+    const excludePath = join(fixtureRoot, '.git', 'info', 'exclude');
+    mkdirSync(dirname(excludePath), { recursive: true });
+    writeFileSync(excludePath, '');
     gitRun(['config', 'core.symlinks', 'false']);
     gitRun(['config', 'core.excludesFile', emptyExcludes]);
     gitRun(['config', 'user.email', 'test@example.com']);
@@ -5431,6 +5441,21 @@ run(NODE, ['archive-posting.mjs']) !== null
   ? pass('no-args: exits 0 (shows help)')
   : fail('no-args: should exit 0 and print help');
 
+// argument validation: a trailing --report must not be dropped. It used to fall
+// through the parser and archive the posting with no report prefix — silently
+// unfindable, the exact failure --report exists to prevent.
+run(NODE, ['archive-posting.mjs', '--dry-run', 'https://boards.greenhouse.io/openai/jobs/123', '--report']) === null
+  ? pass('trailing --report: exits non-zero instead of archiving unkeyed')
+  : fail('trailing --report: should exit non-zero, not archive without a report prefix');
+
+// argument validation: both --report forms still key the capture
+for (const argv of [['--report', '4'], ['--report=4']]) {
+  const keyed = run(NODE, ['archive-posting.mjs', '--dry-run', 'https://boards.greenhouse.io/openai/jobs/123', ...argv]);
+  keyed?.includes('jds/004-')
+    ? pass(`${argv.join(' ')}: capture is keyed to the report`)
+    : fail(`${argv.join(' ')}: capture missing the 004- report prefix`);
+}
+
 // argument validation: flag without URL → exits non-zero
 run(NODE, ['archive-posting.mjs', '--dry-run']) === null
   ? pass('flag-without-url: exits non-zero (URL required)')
@@ -5440,6 +5465,33 @@ run(NODE, ['archive-posting.mjs', '--dry-run']) === null
 run(NODE, ['archive-posting.mjs', '--company=Acme']) === null
   ? pass('--company without URL: exits non-zero')
   : fail('--company without URL: should exit non-zero');
+
+// --report: keys the capture to a report number so it resolves on a later day (#134)
+const reportEqOut = run(NODE, ['archive-posting.mjs', '--dry-run', '--report=42', 'https://boards.greenhouse.io/openai/jobs/123']);
+reportEqOut?.includes('jds/042-')
+  ? pass('--report=N: filename carries the zero-padded report number')
+  : fail('--report=N: report prefix missing from filename');
+
+// The space-separated form must consume its value; otherwise the bare-argument
+// branch takes it as the URL and the real URL is silently dropped.
+const reportSpaceOut = run(NODE, ['archive-posting.mjs', '--dry-run', '--report', '42', 'https://boards.greenhouse.io/openai/jobs/123']);
+reportSpaceOut?.includes('jds/042-') && reportSpaceOut?.toLowerCase().includes('openai')
+  ? pass('--report N: value consumed, URL still parsed')
+  : fail('--report N: swallowed the URL or dropped the report number');
+
+// omitting --report leaves the historical filename shape untouched
+const noReportOut = run(NODE, ['archive-posting.mjs', '--dry-run', 'https://boards.greenhouse.io/openai/jobs/123']);
+noReportOut?.includes(`jds/${todayStr}_`)
+  ? pass('no --report: filename shape unchanged')
+  : fail('no --report: filename shape regressed');
+
+run(NODE, ['archive-posting.mjs', '--dry-run', '--report=abc', 'https://boards.greenhouse.io/openai/jobs/123']) === null
+  ? pass('--report with non-numeric value: exits non-zero')
+  : fail('--report with non-numeric value: should be rejected, not ignored');
+
+run(NODE, ['archive-posting.mjs', '--pipeline', '--report=42']) === null
+  ? pass('--report with --pipeline: rejected (report keys one posting)')
+  : fail('--report with --pipeline: should exit non-zero');
 
 // live render: gated behind Playwright executable availability
 let hasBrowser = false;
@@ -9622,6 +9674,61 @@ try {
     pass('merge-tracker applies pdf-index.tsv to a newly merged tracker row in the same run');
   } else {
     fail('merge-tracker left a newly merged row at ❌ despite a matching pdf-index.tsv entry');
+  }
+
+  // A re-evaluation REPLACES the row's report link, and the PDF flag describes
+  // that report. Inheriting the old flag across the change carried the
+  // superseded report's ✅ onto a report with no PDF: the row then claimed a
+  // tailored CV exists, and the only PDF on disk belonged to the evaluation
+  // that had just been superseded (#2594).
+  const reevalRow = '| 3 | 2026-01-04 | Acme | Backend Engineer, Payments | 4.5/5 | Evaluated | ✅ | [1](../reports/001-acme-2026-01-04.md) | first |';
+  const reevalTsv = (n) => ({
+    name: `00${n}-acme.tsv`,
+    content: `${n}\t2026-02-01\tAcme\tBackend Engineer, Payments\tEvaluated\t3.9/5\t❌\t[${n}](reports/00${n}-acme-2026-02-01.md)\tre-eval\n`,
+  });
+
+  const staleFlag = runPdfSyncFixture(
+    'reeval-stale',
+    reevalRow,
+    '# report\tpdf\thtml\tformat\tdate\n1\toutput/acme-1.pdf\t\t\t2026-01-04\n',
+    [reevalTsv(2)],
+  );
+  const staleRow = staleFlag.merged.split('\n').find((l) => l.startsWith('| 3 ')) || '';
+  if (staleFlag.result !== null && /\[2\]/.test(staleRow) && staleRow.split('|')[7].trim() === '❌') {
+    pass('a re-eval that changes the report clears a ✅ the new report has no PDF for (#2594)');
+  } else {
+    fail(`stale PDF flag survived a report change: ${staleRow.trim()}`);
+  }
+
+  // The `—`-to-`[2]` variant. extractReportNum returns null for `—`, so a guard
+  // demanding BOTH sides be truthy fell straight back to duplicate.pdf and
+  // inherited the stale ✅ exactly as before the fix. A `—` row carrying a ✅ is
+  // ordinary — it is a tracker entry added before its evaluation (#2594 review).
+  const dashRow = '| 4 | 2026-01-04 | Acme | Backend Engineer, Payments | 4.5/5 | Evaluated | ✅ | — | backfilled |';
+  const dashFlag = runPdfSyncFixture(
+    'reeval-dash',
+    dashRow,
+    '# report\tpdf\thtml\tformat\tdate\n',
+    [reevalTsv(2)],
+  );
+  const dashResult = dashFlag.merged.split('\n').find((l) => l.startsWith('| 4 ')) || '';
+  if (dashFlag.result !== null && /\[2\]/.test(dashResult) && dashResult.split('|')[7].trim() === '❌') {
+    pass('a re-eval from a report-less (—) row clears the inherited ✅ too (#2594)');
+  } else {
+    fail(`stale PDF flag survived a —-to-[2] report change: ${dashResult.trim()}`);
+  }
+
+  const keptFlag = runPdfSyncFixture(
+    'reeval-kept',
+    reevalRow,
+    '# report\tpdf\thtml\tformat\tdate\n1\toutput/acme-1.pdf\t\t\t2026-01-04\n2\toutput/acme-2.pdf\t\t\t2026-02-01\n',
+    [reevalTsv(2)],
+  );
+  const keptRow = keptFlag.merged.split('\n').find((l) => l.startsWith('| 3 ')) || '';
+  if (keptFlag.result !== null && /\[2\]/.test(keptRow) && keptRow.split('|')[7].trim() === '✅') {
+    pass('a re-eval keeps ✅ when the NEW report does have a generated PDF (#2594)');
+  } else {
+    fail(`re-eval wrongly cleared a valid PDF flag: ${keptRow.trim()}`);
   }
 } catch (e) {
   fail(`merge-tracker PDF flag sync test crashed: ${e.message}`);
